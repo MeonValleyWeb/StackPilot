@@ -18,6 +18,7 @@ New project scaffolded from the SpinUpWP TUI core. Provider-agnostic model and f
 - Selected site details now refresh from the provider API, not just the list snapshot
 - Box navigation: Tab cycles sections, `o` opens the deployment URL, `g` opens the repo, `d` opens a deployment page
 - `c` opens a create-site scaffold page
+- Top bar now shows the Vercel billing plan/status exposed by the token
 - Action hints for future create, deploy, update, and delete flows
 
 ## Setup

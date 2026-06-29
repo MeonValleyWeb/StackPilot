@@ -69,6 +69,8 @@ export function Sites({ rows }: { rows: number }) {
   const [sites, setSites] = useState<Site[]>([])
   const [selectedSite, setSelectedSite] = useState<Site | null>(null)
   const [deploys, setDeploys] = useState<Deploy[]>([])
+  const [billingPlan, setBillingPlan] = useState<string | null>(null)
+  const [billingStatus, setBillingStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [panel, setPanel] = useState<Panel>("sites")
@@ -82,10 +84,15 @@ export function Sites({ rows }: { rows: number }) {
       return
     }
     const client = new VercelClient(cfg.vercelToken, cfg.vercelTeamId)
-    void Promise.all([client.listSites(), client.listDeployments()])
-      .then(([items, recentDeploys]) => {
+    void Promise.all([client.listSites(), client.listDeployments(), fetch("https://api.vercel.com/v2/user", {
+      headers: { Authorization: `Bearer ${cfg.vercelToken}`, Accept: "application/json" },
+    })])
+      .then(async ([items, recentDeploys, userRes]) => {
+        const userJson = (await userRes.json()) as { user?: { billing?: { plan?: string | null; status?: string | null } } }
         setSites(items)
         setDeploys(recentDeploys)
+        setBillingPlan(userJson.user?.billing?.plan ?? null)
+        setBillingStatus(userJson.user?.billing?.status ?? null)
         setSelectedIndex((cur) => Math.min(cur, Math.max(0, items.length - 1)))
       })
       .catch((err) => setError((err as Error).message))
@@ -155,6 +162,7 @@ export function Sites({ rows }: { rows: number }) {
   const deploying = deploys.filter((d) => ["pending", "building", "queued", "running", "deploying"].includes(d.status.toLowerCase())).length
   const failedCount = failed.length
   const topBar = [`${sites.length} sites`, `${deploys.length} deploys`, `${failedCount} failed`, `${deploying} deploying`].join(" · ")
+  const billingBar = billingPlan ? `${billingPlan} · ${billingStatus ?? "unknown"}` : "billing unavailable"
 
   const details = useMemo(() => {
     if (!selected) return null
@@ -184,6 +192,12 @@ export function Sites({ rows }: { rows: number }) {
         <text content={`  ${topBar}`} fg={theme.textDim} />
         <box style={{ flexGrow: 1 }} />
         <text content={error ? error : "updated just now"} fg={error ? theme.bad : theme.textFaint} wrapMode="none" />
+      </box>
+
+      <box style={{ flexDirection: "row", height: 1, paddingLeft: 1, paddingRight: 1 }}>
+        <text content={`Billing: ${billingBar}`} fg={theme.textDim} />
+        <box style={{ flexGrow: 1 }} />
+        <text content="Detailed spend metrics not exposed by the current token" fg={theme.textFaint} />
       </box>
 
       {page === "create" ? (
