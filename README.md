@@ -9,7 +9,7 @@ New project scaffolded from the SpinUpWP TUI core. Provider-agnostic model and f
 ## Current Scope
 
 - Vercel-backed site list scaffold
-- Dashboard layout with summary cards, recent deploys, failed deploys, site list, and details pane
+- Dashboard layout with boxed, focusable panels, recent deploys, failed deploys, site list, and details pane
 - Basic site list view with provider and status labels
 - Action hints for future create, deploy, update, and delete flows
 
