@@ -220,6 +220,7 @@ export function Sites({ rows }: { rows: number }) {
               <text content={`Domains: ${selected.domains?.join(", ") ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
               <text content={`Deployment URL: ${selected.deploymentUrl ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
               <text content={`Recent deploys for site: ${siteDeployments.length}`} fg={theme.textDim} />
+              <text content={selected.deploymentUrl || selected.domains?.[0] ? "Press o to open in browser" : "No URL available to open"} fg={theme.textFaint} />
               <text content="This page is the place to probe richer provider-specific API fields." fg={theme.textFaint} />
             </Section>
           </box>

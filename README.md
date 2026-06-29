@@ -13,6 +13,7 @@ New project scaffolded from the SpinUpWP TUI core. Provider-agnostic model and f
 - Basic site list view with provider and status labels
 - Site details now show repo, stack, domains, last deploy, and deployment URL
 - Enter opens a dedicated site page for deeper provider/API-specific detail probing
+- Current design iteration: boxed dashboard panels, site drill-down, and browser open actions
 - Action hints for future create, deploy, update, and delete flows
 
 ## Setup
