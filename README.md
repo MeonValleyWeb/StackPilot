@@ -19,6 +19,8 @@ New project scaffolded from the SpinUpWP TUI core. Provider-agnostic model and f
 - Box navigation: Tab cycles sections, `o` opens the deployment URL, `g` opens the repo, `d` opens a deployment page
 - `c` opens a create-site scaffold page
 - Top bar now shows the Vercel billing plan/status exposed by the token
+- Number keys: `1` Dashboard, `2` Vercel, `3` Netlify, `4` Cloudflare
+- Dashboard now renders as a compact dense grid with all panels visible
 - Action hints for future create, deploy, update, and delete flows
 
 ## Setup

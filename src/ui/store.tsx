@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react"
 
-export type Route = "dashboard"
+export type Route = "dashboard" | "vercel" | "netlify" | "cloudflare"
 
 interface StoreValue {
   route: Route
