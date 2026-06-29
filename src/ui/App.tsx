@@ -19,13 +19,17 @@ export function App() {
   }, [])
 
   useKeyboard((key) => {
-    if (key.ctrl && key.name === "c") {
+    const quit = () => {
       try {
         renderer.destroy?.()
       } catch {}
       process.exit(0)
     }
-    if (key.name === "q") process.exit(0)
+
+    if (key.ctrl && key.name === "c") {
+      return quit()
+    }
+    if (key.name === "q") return quit()
     if (key.name === "?") store.setOverlayOpen(!store.overlayOpen)
   })
 

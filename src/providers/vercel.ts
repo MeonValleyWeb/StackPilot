@@ -1,10 +1,23 @@
-import type { Site } from "../domain.ts"
+import type { Deploy, Site } from "../domain.ts"
 
 interface VercelProject {
   name: string
   latestDeployment?: {
     state?: string
     created?: number
+  } | null
+}
+
+interface VercelDeployment {
+  uid: string
+  name: string
+  state: string
+  target?: string | null
+  created?: number | null
+  url?: string | null
+  meta?: {
+    githubCommitRef?: string | null
+    githubCommitAuthorName?: string | null
   } | null
 }
 
@@ -37,6 +50,27 @@ export class VercelClient {
       canUpdate: true,
       canDelete: true,
       canDeploy: true,
+    }))
+  }
+
+  async listDeployments(): Promise<Deploy[]> {
+    const res = await fetch(this.url("/v13/deployments"), {
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/json",
+      },
+    })
+    if (!res.ok) throw new Error(`Vercel API error (${res.status})`)
+    const json = (await res.json()) as { deployments?: VercelDeployment[] }
+    return (json.deployments ?? []).map((deployment) => ({
+      id: deployment.uid,
+      siteId: deployment.name,
+      status: deployment.state,
+      createdAt: deployment.created ? new Date(deployment.created).toISOString() : new Date().toISOString(),
+      url: deployment.url ?? null,
+      branch: deployment.meta?.githubCommitRef ?? null,
+      target: deployment.target ?? null,
+      creator: deployment.meta?.githubCommitAuthorName ?? null,
     }))
   }
 }

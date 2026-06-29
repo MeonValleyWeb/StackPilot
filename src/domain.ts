@@ -21,4 +21,8 @@ export interface Deploy {
   siteId: string
   status: string
   createdAt: string
+  url?: string | null
+  branch?: string | null
+  target?: string | null
+  creator?: string | null
 }
