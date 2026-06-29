@@ -263,23 +263,29 @@ export function Sites({ rows }: { rows: number }) {
             </box>
           </box>
 
-          {panel === "deploy" && selectedDeploy && (
-            <box style={{ flexGrow: 1, flexDirection: "column", marginTop: 1 }}>
-              <Section title={`Deployment · ${selectedDeploy.siteId}`} focused>
-                <text content={`State: ${selectedDeploy.status}`} fg={statColor(selectedDeploy.status)} />
-                <text content={`Ready: ${selectedDeploy.readyState ?? "unknown"}`} fg={theme.textDim} />
-                <text content={`Created: ${since(selectedDeploy.createdAt)}`} fg={theme.textDim} />
-                <text content={`URL: ${selectedDeploy.url ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
-                <text content={`Inspector: ${selectedDeploy.inspectorUrl ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
-                <text content={selectedDeploy.errorCode ? `Error: ${selectedDeploy.errorCode}` : "No error code"} fg={selectedDeploy.errorCode ? theme.bad : theme.good} />
-                <text content={selectedDeploy.errorMessage ? selectedDeploy.errorMessage : "No error message"} fg={theme.textFaint} />
-                <text content={selectedDeploy.inspectorUrl ? "Press d to open inspector/build page" : "No inspector page available"} fg={theme.textFaint} />
-              </Section>
-            </box>
-          )}
+          <box style={{ flexGrow: 1, flexDirection: "column" }}>
+            <Section title={`Deployment${selectedDeploy ? ` · ${selectedDeploy.siteId}` : ""}`} focused={panel === "deploy"}>
+              {selectedDeploy ? (
+                <>
+                  <box style={{ flexDirection: "row", height: 3 }}>
+                    <MiniStat label="State" value={selectedDeploy.status} />
+                    <MiniStat label="Ready" value={selectedDeploy.readyState ?? "unknown"} />
+                    <MiniStat label="Age" value={since(selectedDeploy.createdAt)} />
+                  </box>
+                  <text content={`URL: ${selectedDeploy.url ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
+                  <text content={`Inspector: ${selectedDeploy.inspectorUrl ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
+                  <text content={selectedDeploy.errorCode ? `Error: ${selectedDeploy.errorCode}` : "No error code"} fg={selectedDeploy.errorCode ? theme.bad : theme.good} />
+                  <text content={selectedDeploy.errorMessage ? selectedDeploy.errorMessage : "No error message"} fg={theme.textFaint} />
+                  <text content={selectedDeploy.inspectorUrl ? "Press d to open inspector/build page" : "No inspector page available"} fg={theme.textFaint} />
+                </>
+              ) : (
+                <text content="Choose a deployment from the recent list or failed list." fg={theme.textFaint} />
+              )}
+            </Section>
+          </box>
 
           {panel === "site" && selected && (
-            <box style={{ flexGrow: 1, flexDirection: "column", marginTop: 1 }}>
+            <box style={{ flexGrow: 1, flexDirection: "column" }}>
               <Section title="Site API View" focused>
                 <box style={{ flexDirection: "row", height: 4 }}>
                   <MiniStat label="URL" value={selected.deploymentUrl ?? selected.domains?.[0] ?? "Unknown"} />
