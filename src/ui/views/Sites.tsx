@@ -8,7 +8,7 @@ import { loadConfig } from "../../config.ts"
 import { VercelClient } from "../../providers/vercel.ts"
 import { openUrl } from "../../lib/open.ts"
 
-type Panel = "sites" | "details" | "failed" | "recent" | "menu" | "site"
+type Panel = "sites" | "details" | "failed" | "recent" | "menu" | "site" | "deploy"
 type Page = "dashboard" | "create"
 
 function since(iso: string | null): string {
@@ -59,8 +59,8 @@ function openRepo(site: Site | null) {
   openUrl(repo.startsWith("github.com/") ? `https://${repo}` : `https://github.com/${repo}`)
 }
 
-function openDeploymentPage(site: Site | null) {
-  const url = site?.deploymentUrl
+function openDeploymentPage(deploy: Deploy | null) {
+  const url = deploy?.inspectorUrl ?? deploy?.url
   if (!url) return
   openUrl(url.startsWith("http") ? url : `https://${url}`)
 }
@@ -73,6 +73,7 @@ export function Sites({ rows }: { rows: number }) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [panel, setPanel] = useState<Panel>("sites")
   const [page, setPage] = useState<Page>("dashboard")
+  const [selectedDeployIndex, setSelectedDeployIndex] = useState(0)
 
   useEffect(() => {
     const cfg = loadConfig()
@@ -114,8 +115,19 @@ export function Sites({ rows }: { rows: number }) {
       return
     }
 
+    if (panel === "recent" || panel === "failed" || panel === "deploy") {
+      if (key.name === "down" || key.name === "j") {
+        setSelectedDeployIndex((cur) => moveSelection(cur, 1, siteDeployments.length))
+        return
+      }
+      if (key.name === "up" || key.name === "k") {
+        setSelectedDeployIndex((cur) => moveSelection(cur, -1, siteDeployments.length))
+        return
+      }
+    }
+
     if (key.name === "tab") {
-      const order: Panel[] = ["sites", "details", "failed", "recent", "menu", "site"]
+      const order: Panel[] = ["sites", "details", "failed", "recent", "deploy", "menu", "site"]
       setPanel(order[(order.indexOf(panel) + 1) % order.length])
       return
     }
@@ -124,12 +136,16 @@ export function Sites({ rows }: { rows: number }) {
       return
     }
     if (key.name === "enter") {
-      setPanel("site")
+      if (panel === "recent" || panel === "failed") {
+        setPanel("deploy")
+      } else {
+        setPanel("site")
+      }
       return
     }
     if (key.name === "o") return openSiteUrl(selected)
     if (key.name === "g") return openRepo(selected)
-    if (key.name === "d") return openDeploymentPage(selected)
+    if (key.name === "d") return openDeploymentPage(selectedDeploy)
     if (key.name === "c") return setPage("create")
   })
 
@@ -155,6 +171,11 @@ export function Sites({ rows }: { rows: number }) {
   }, [selected])
 
   const siteDeployments = useMemo(() => (selected ? deploys.filter((d) => d.siteId === selected.id || d.siteId === selected.name) : []), [deploys, selected])
+  const selectedDeploy = siteDeployments[selectedDeployIndex] ?? siteDeployments[0] ?? null
+
+  useEffect(() => {
+    setSelectedDeployIndex((cur) => Math.min(cur, Math.max(0, siteDeployments.length - 1)))
+  }, [siteDeployments.length])
 
   return (
     <box style={{ flexGrow: 1, flexDirection: "column" }}>
@@ -233,7 +254,7 @@ export function Sites({ rows }: { rows: number }) {
             <box style={{ width: "50%", flexDirection: "column" }}>
               <Section title="Recent deploys" focused={panel === "recent"}>
                 {recent.length ? recent.map((d) => (
-                  <box key={d.id} style={{ flexDirection: "row", height: 1 }}>
+                  <box key={d.id} style={{ flexDirection: "row", height: 1, backgroundColor: d.id === selectedDeploy?.id ? theme.bgAlt : undefined }}>
                     <text content={`${statusDot(d.status)} ${d.siteId}${d.branch ? ` · ${d.branch}` : ""}`} fg={statColor(d.status)} wrapMode="none" style={{ flexGrow: 1, flexShrink: 1 }} />
                     <text content={since(d.createdAt)} fg={theme.textFaint} />
                   </box>
@@ -241,6 +262,21 @@ export function Sites({ rows }: { rows: number }) {
               </Section>
             </box>
           </box>
+
+          {panel === "deploy" && selectedDeploy && (
+            <box style={{ flexGrow: 1, flexDirection: "column", marginTop: 1 }}>
+              <Section title={`Deployment · ${selectedDeploy.siteId}`} focused>
+                <text content={`State: ${selectedDeploy.status}`} fg={statColor(selectedDeploy.status)} />
+                <text content={`Ready: ${selectedDeploy.readyState ?? "unknown"}`} fg={theme.textDim} />
+                <text content={`Created: ${since(selectedDeploy.createdAt)}`} fg={theme.textDim} />
+                <text content={`URL: ${selectedDeploy.url ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
+                <text content={`Inspector: ${selectedDeploy.inspectorUrl ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
+                <text content={selectedDeploy.errorCode ? `Error: ${selectedDeploy.errorCode}` : "No error code"} fg={selectedDeploy.errorCode ? theme.bad : theme.good} />
+                <text content={selectedDeploy.errorMessage ? selectedDeploy.errorMessage : "No error message"} fg={theme.textFaint} />
+                <text content={selectedDeploy.inspectorUrl ? "Press d to open inspector/build page" : "No inspector page available"} fg={theme.textFaint} />
+              </Section>
+            </box>
+          )}
 
           {panel === "site" && selected && (
             <box style={{ flexGrow: 1, flexDirection: "column", marginTop: 1 }}>
@@ -272,7 +308,7 @@ export function Sites({ rows }: { rows: number }) {
                 </box>
                 <box style={{ flexDirection: "row", height: 1 }}>
                   <text content="Deploy: " fg={theme.textDim} />
-                  <text content={selected.deploymentUrl ? "Press d to open deployment" : "No deployment page available"} fg={theme.textFaint} />
+                  <text content={selectedDeploy?.inspectorUrl ? "Press d to open deployment" : "No deployment page available"} fg={theme.textFaint} />
                 </box>
                 <text content="This page is the place to probe richer provider-specific API fields." fg={theme.textFaint} />
               </Section>

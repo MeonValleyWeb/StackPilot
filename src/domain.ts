@@ -26,7 +26,11 @@ export interface Deploy {
   status: string
   createdAt: string
   url?: string | null
+  inspectorUrl?: string | null
   branch?: string | null
   target?: string | null
   creator?: string | null
+  errorCode?: string | null
+  errorMessage?: string | null
+  readyState?: string | null
 }

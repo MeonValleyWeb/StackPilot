@@ -49,6 +49,7 @@ interface VercelDeployment {
   target?: string | null
   created?: number | null
   url?: string | null
+  inspectorUrl?: string | null
   meta?: {
     githubCommitRef?: string | null
     githubCommitAuthorName?: string | null
@@ -147,15 +148,19 @@ export class VercelClient {
     })
     if (!res.ok) await this.fail(res)
     const json = (await res.json()) as { deployments?: VercelDeployment[] }
-    return (json.deployments ?? []).map((deployment) => ({
+  return (json.deployments ?? []).map((deployment) => ({
       id: deployment.uid,
       siteId: deployment.name,
       status: deployment.state,
       createdAt: deployment.created ? new Date(deployment.created).toISOString() : new Date().toISOString(),
       url: deployment.url ?? null,
+      inspectorUrl: deployment.inspectorUrl ?? null,
       branch: deployment.meta?.githubCommitRef ?? null,
       target: deployment.target ?? null,
       creator: deployment.meta?.githubCommitAuthorName ?? null,
+      errorCode: null,
+      errorMessage: null,
+      readyState: deployment.state,
     }))
   }
 }
