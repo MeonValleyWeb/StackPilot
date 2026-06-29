@@ -2,9 +2,18 @@ import type { Deploy, Site } from "../domain.ts"
 
 interface VercelProject {
   name: string
+  framework?: string | null
+  gitRepository?: {
+    type?: string | null
+    repo?: string | null
+    org?: string | null
+    repoId?: string | number | null
+  } | null
+  domains?: Array<string | { name?: string | null }> | null
   latestDeployment?: {
     state?: string
     created?: number
+    url?: string | null
   } | null
 }
 
@@ -30,6 +39,12 @@ export class VercelClient {
     return url.toString()
   }
 
+  private async fail(res: Response): Promise<never> {
+    const body = await res.text().catch(() => "")
+    const detail = body ? `: ${body}` : ""
+    throw new Error(`Vercel API error (${res.status} ${res.statusText})${detail}`)
+  }
+
   async listSites(): Promise<Site[]> {
     const res = await fetch(this.url("/v9/projects"), {
       headers: {
@@ -37,7 +52,7 @@ export class VercelClient {
         Accept: "application/json",
       },
     })
-    if (!res.ok) throw new Error(`Vercel API error (${res.status})`)
+    if (!res.ok) await this.fail(res)
     const json = (await res.json()) as { projects?: VercelProject[] }
     return (json.projects ?? []).map((project) => ({
       id: project.name,
@@ -46,6 +61,10 @@ export class VercelClient {
       status: project.latestDeployment?.state ?? "unknown",
       environment: "production",
       lastDeploy: project.latestDeployment?.created ? new Date(project.latestDeployment.created).toISOString() : null,
+      stack: project.framework ?? null,
+      repo: project.gitRepository?.repo ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/") : null,
+      domains: (project.domains ?? []).map((domain) => typeof domain === "string" ? domain : domain.name).filter((domain): domain is string => Boolean(domain)),
+      deploymentUrl: project.latestDeployment?.url ?? null,
       canCreate: true,
       canUpdate: true,
       canDelete: true,
@@ -54,13 +73,13 @@ export class VercelClient {
   }
 
   async listDeployments(): Promise<Deploy[]> {
-    const res = await fetch(this.url("/v13/deployments"), {
+    const res = await fetch(this.url("/v6/deployments"), {
       headers: {
         Authorization: `Bearer ${this.token}`,
         Accept: "application/json",
       },
     })
-    if (!res.ok) throw new Error(`Vercel API error (${res.status})`)
+    if (!res.ok) await this.fail(res)
     const json = (await res.json()) as { deployments?: VercelDeployment[] }
     return (json.deployments ?? []).map((deployment) => ({
       id: deployment.uid,

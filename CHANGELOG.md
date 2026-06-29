@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic site list screen with provider/status display and action hints.
 - Vercel-backed project loading via `VERCEL_TOKEN`.
 - Dashboard layout with boxed focusable panels, recent deploys at the bottom, failed deploys, navigation, and per-site details pane.
+- Site details now include repo, stack, domains, last deploy, deployment URL, and browser-open action.
 
 ## [0.1.0] - 2026-06-29
 

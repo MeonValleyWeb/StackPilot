@@ -11,6 +11,7 @@ New project scaffolded from the SpinUpWP TUI core. Provider-agnostic model and f
 - Vercel-backed site list scaffold
 - Dashboard layout with boxed, focusable panels, recent deploys, failed deploys, site list, and details pane
 - Basic site list view with provider and status labels
+- Site details now show repo, stack, domains, last deploy, and deployment URL
 - Action hints for future create, deploy, update, and delete flows
 
 ## Setup

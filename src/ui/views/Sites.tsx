@@ -6,6 +6,7 @@ import { statusColor, statusDot, theme } from "../../lib/theme.ts"
 import type { Deploy, Site } from "../../domain.ts"
 import { loadConfig } from "../../config.ts"
 import { VercelClient } from "../../providers/vercel.ts"
+import { openUrl } from "../../lib/open.ts"
 
 type Panel = "sites" | "details" | "failed" | "recent" | "menu"
 
@@ -96,6 +97,11 @@ export function Sites({ rows }: { rows: number }) {
     if (key.name === "right") {
       const order: Panel[] = ["sites", "details", "failed", "recent", "menu"]
       setPanel(order[(order.indexOf(panel) + 1) % order.length])
+      return
+    }
+    if (key.name === "o") {
+      const target = selected?.deploymentUrl ?? selected?.domains?.[0]
+      if (target) openUrl(target.startsWith("http") ? target : `https://${target}`)
     }
   })
 
@@ -104,14 +110,24 @@ export function Sites({ rows }: { rows: number }) {
   const failed = deploys.filter((d) => ["error", "failed", "canceled", "cancelled"].includes(d.status.toLowerCase())).slice(0, 8)
   const deploying = deploys.filter((d) => ["pending", "building", "queued", "running", "deploying"].includes(d.status.toLowerCase())).length
   const failedCount = failed.length
+  const topBar = [
+    `${sites.length} sites`,
+    `${deploys.length} deploys`,
+    `${failedCount} failed`,
+    `${deploying} deploying`,
+  ].join(" · ")
 
   const details = useMemo(() => {
     if (!selected) return null
     return [
       ["Provider", selected.provider.name],
+      ["Repo", selected.repo ?? "Unknown"],
+      ["Stack", selected.stack ?? "Unknown"],
       ["Environment", selected.environment],
       ["Status", selected.status],
       ["Last deploy", since(selected.lastDeploy)],
+      ["Deployment URL", selected.deploymentUrl ?? selected.domains?.[0] ?? "Unknown"],
+      ["Domains", selected.domains?.length ? selected.domains.join(", ") : "Unknown"],
       ["Can create", selected.canCreate ? "Yes" : "No"],
       ["Can deploy", selected.canDeploy ? "Yes" : "No"],
       ["Can update", selected.canUpdate ? "Yes" : "No"],
@@ -123,7 +139,7 @@ export function Sites({ rows }: { rows: number }) {
     <box style={{ flexGrow: 1, flexDirection: "column" }}>
       <box style={{ flexDirection: "row", height: 1, paddingLeft: 1, paddingRight: 1 }}>
         <text content="1 Dashboard" fg={theme.brand} />
-        <text content={`  ${sites.length} sites · ${deploys.length} deploys · ${failedCount} failed · ${deploying} deploying`} fg={theme.textDim} />
+        <text content={`  ${topBar}`} fg={theme.textDim} />
         <box style={{ flexGrow: 1 }} />
         <text content={error ? error : "updated just now"} fg={error ? theme.bad : theme.textFaint} wrapMode="none" />
       </box>
@@ -188,13 +204,14 @@ export function Sites({ rows }: { rows: number }) {
 
       <box style={{ height: 3, flexDirection: "column", marginTop: 1 }}>
         <Section title="Menu" focused={panel === "menu"}>
-          <StatusBar
-            hints={[
-              { key: "↑↓", label: "sites" },
-              { key: "Tab", label: "switch panel" },
-              { key: "⏎", label: "open" },
-              { key: "q", label: "quit" },
-            ]}
+            <StatusBar
+              hints={[
+                { key: "↑↓", label: "sites" },
+                { key: "Tab", label: "switch panel" },
+                { key: "⏎", label: "open" },
+                { key: "o", label: "open url" },
+                { key: "q", label: "quit" },
+              ]}
             message={panel === "menu" ? "Menu focused" : "Tab through panels for details"}
             showGlobal={false}
           />

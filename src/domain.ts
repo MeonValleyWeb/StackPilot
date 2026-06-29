@@ -10,6 +10,10 @@ export interface Site {
   status: string
   environment: string
   lastDeploy: string | null
+  stack?: string | null
+  repo?: string | null
+  domains?: string[]
+  deploymentUrl?: string | null
   canCreate: boolean
   canUpdate: boolean
   canDelete: boolean
