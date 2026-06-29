@@ -15,6 +15,31 @@ interface VercelProject {
     created?: number
     url?: string | null
   } | null
+  latestDeployments?: Array<{
+    state?: string
+    createdAt?: number
+    readyAt?: number
+    url?: string | null
+    deploymentHostname?: string | null
+    target?: string | null
+    creator?: { name?: string | null } | null
+    meta?: {
+      githubCommitRef?: string | null
+      githubCommitAuthorName?: string | null
+      githubCommitMessage?: string | null
+      githubCommitSha?: string | null
+    } | null
+  }> | null
+  link?: {
+    repo?: string | null
+    org?: string | null
+    productionBranch?: string | null
+    deployHooks?: unknown
+  } | null
+  targets?: {
+    production?: { alias?: string[] | null } | null
+    preview?: { alias?: string[] | null } | null
+  } | null
 }
 
 interface VercelDeployment {
@@ -58,13 +83,20 @@ export class VercelClient {
       id: project.name,
       name: project.name,
       provider: { id: "vercel", name: "Vercel" },
-      status: project.latestDeployment?.state ?? "unknown",
+      status: project.latestDeployments?.[0]?.state ?? project.latestDeployment?.state ?? "unknown",
       environment: "production",
-      lastDeploy: project.latestDeployment?.created ? new Date(project.latestDeployment.created).toISOString() : null,
+      lastDeploy: project.latestDeployments?.[0]?.createdAt
+        ? new Date(project.latestDeployments[0].createdAt).toISOString()
+        : project.latestDeployment?.created
+          ? new Date(project.latestDeployment.created).toISOString()
+          : null,
       stack: project.framework ?? null,
-      repo: project.gitRepository?.repo ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/") : null,
-      domains: (project.domains ?? []).map((domain) => typeof domain === "string" ? domain : domain.name).filter((domain): domain is string => Boolean(domain)),
-      deploymentUrl: project.latestDeployment?.url ?? null,
+      repo: project.link?.repo ? [project.link.org, project.link.repo].filter(Boolean).join("/") : project.gitRepository?.repo ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/") : null,
+      domains: (project.targets?.production?.alias ?? [])
+        .concat(project.targets?.preview?.alias ?? [])
+        .map((domain) => domain.replace(/^https?:\/\//, ""))
+        .filter((domain, index, arr) => Boolean(domain) && arr.indexOf(domain) === index),
+      deploymentUrl: project.latestDeployments?.[0]?.url ?? project.latestDeployment?.url ?? null,
       canCreate: true,
       canUpdate: true,
       canDelete: true,
@@ -85,13 +117,20 @@ export class VercelClient {
       id: project.name,
       name: project.name,
       provider: { id: "vercel", name: "Vercel" },
-      status: project.latestDeployment?.state ?? "unknown",
+      status: project.latestDeployments?.[0]?.state ?? project.latestDeployment?.state ?? "unknown",
       environment: "production",
-      lastDeploy: project.latestDeployment?.created ? new Date(project.latestDeployment.created).toISOString() : null,
+      lastDeploy: project.latestDeployments?.[0]?.createdAt
+        ? new Date(project.latestDeployments[0].createdAt).toISOString()
+        : project.latestDeployment?.created
+          ? new Date(project.latestDeployment.created).toISOString()
+          : null,
       stack: project.framework ?? null,
-      repo: project.gitRepository?.repo ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/") : null,
-      domains: (project.domains ?? []).map((domain) => typeof domain === "string" ? domain : domain.name).filter((domain): domain is string => Boolean(domain)),
-      deploymentUrl: project.latestDeployment?.url ?? null,
+      repo: project.link?.repo ? [project.link.org, project.link.repo].filter(Boolean).join("/") : project.gitRepository?.repo ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/") : null,
+      domains: (project.targets?.production?.alias ?? [])
+        .concat(project.targets?.preview?.alias ?? [])
+        .map((domain) => domain.replace(/^https?:\/\//, ""))
+        .filter((domain, index, arr) => Boolean(domain) && arr.indexOf(domain) === index),
+      deploymentUrl: project.latestDeployments?.[0]?.url ?? project.latestDeployment?.url ?? null,
       canCreate: true,
       canUpdate: true,
       canDelete: true,
