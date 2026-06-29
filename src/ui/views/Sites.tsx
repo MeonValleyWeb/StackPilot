@@ -2,41 +2,30 @@ import { List } from "../List.tsx"
 import { StatusBar } from "../StatusBar.tsx"
 import { statusDot, statusColor } from "../../lib/theme.ts"
 import type { Site } from "../../domain.ts"
-
-const SITES: Site[] = [
-  {
-    id: "site-1",
-    name: "Marketing site",
-    provider: { id: "vercel", name: "Vercel" },
-    status: "deployed",
-    environment: "production",
-    lastDeploy: "2026-06-29T09:30:00Z",
-    canCreate: true,
-    canUpdate: true,
-    canDelete: true,
-    canDeploy: true,
-  },
-  {
-    id: "site-2",
-    name: "Docs site",
-    provider: { id: "cloudflare", name: "Cloudflare" },
-    status: "deploying",
-    environment: "preview",
-    lastDeploy: null,
-    canCreate: true,
-    canUpdate: true,
-    canDelete: true,
-    canDeploy: true,
-  },
-]
+import { loadConfig } from "../../config.ts"
+import { VercelClient } from "../../providers/vercel.ts"
+import { useEffect, useState } from "react"
 
 export function Sites({ rows }: { rows: number }) {
+  const [sites, setSites] = useState<Site[]>([])
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const cfg = loadConfig()
+    if (!cfg.vercelToken) {
+      setError("Set VERCEL_TOKEN in .env to load projects.")
+      return
+    }
+    const client = new VercelClient(cfg.vercelToken, cfg.vercelTeamId)
+    void client.listSites().then(setSites).catch((err) => setError((err as Error).message))
+  }, [])
+
   const selectedIndex = 0
 
   return (
     <box style={{ flexGrow: 1, flexDirection: "column" }}>
       <List
-        items={SITES}
+        items={sites}
         selectedIndex={selectedIndex}
         viewportRows={Math.max(1, rows - 2)}
         keyFor={(item) => item.id}
@@ -46,6 +35,7 @@ export function Sites({ rows }: { rows: number }) {
             <text content={site.provider.name} fg={selected ? statusColor(site.status) : statusColor(site.status)} />
           </box>
         )}
+        emptyText={error ?? "No projects loaded yet."}
       />
       <StatusBar
         hints={[
@@ -54,7 +44,7 @@ export function Sites({ rows }: { rows: number }) {
           { key: "u", label: "update" },
           { key: "x", label: "delete" },
         ]}
-        message="Provider-agnostic site list scaffold"
+        message="Vercel-backed site list scaffold"
       />
     </box>
   )

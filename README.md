@@ -8,9 +8,16 @@ New project scaffolded from the SpinUpWP TUI core. Provider-agnostic model and f
 
 ## Current Scope
 
-- Provider-agnostic `Site` model scaffold
+- Vercel-backed site list scaffold
 - Basic site list view with provider and status labels
 - Action hints for future create, deploy, update, and delete flows
+
+## Setup
+
+1. Copy `.env.example` to `.env`.
+2. Add `VERCEL_TOKEN`.
+3. Optionally set `VERCEL_TEAM_ID` if you want to scope requests to a team.
+4. Run `bun install` and `bun run dev`.
 
 ## Working Agreement
 

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Versioned package metadata and release log.
 - First provider-agnostic domain model (`Provider`, `Site`, `Deploy`).
 - Basic site list screen with provider/status display and action hints.
+- Vercel-backed project loading via `VERCEL_TOKEN`.
 
 ## [0.1.0] - 2026-06-29
 
