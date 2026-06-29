@@ -60,8 +60,8 @@ Run these in order. Replace `X.Y.Z` with the new version.
    add a fresh empty `## [Unreleased]` above it, and update the compare links at
    the bottom:
    ```
-   [Unreleased]: https://github.com/mwender/spinupwp-tui/compare/vX.Y.Z...HEAD
-   [X.Y.Z]:      https://github.com/mwender/spinupwp-tui/compare/vPREV...vX.Y.Z
+   [Unreleased]: https://github.com/MeonValleyWeb/StackPilot/compare/vX.Y.Z...HEAD
+   [X.Y.Z]:      https://github.com/MeonValleyWeb/StackPilot/compare/vPREV...vX.Y.Z
    ```
    (Do the version bump + changelog roll *before* tagging so the tagged commit
    carries them.)
@@ -88,7 +88,7 @@ Run these in order. Replace `X.Y.Z` with the new version.
 
    **Update:** \`git pull\` in your checkout (the global \`spinup\` symlink picks it up immediately).
 
-   **Full changelog:** https://github.com/mwender/spinupwp-tui/compare/vPREV...vX.Y.Z"
+    **Full changelog:** https://github.com/MeonValleyWeb/StackPilot/compare/vPREV...vX.Y.Z"
    ```
    - Title: `vX.Y.Z — <short theme>` (e.g. "Upgrade PHP versions (first write action)").
    - Body: short intro, `## Highlights` (bold lead-ins, key bindings in backticks),

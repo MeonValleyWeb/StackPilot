@@ -3,6 +3,7 @@ import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react"
 import { theme } from "../lib/theme.ts"
 import { useStore } from "./store.tsx"
 import { Splash } from "./Splash.tsx"
+import { Sites } from "./views/Sites.tsx"
 
 const MIN_SPLASH_MS = 700
 
@@ -38,10 +39,7 @@ export function App() {
         <text content="StackPilot" fg={theme.text} />
       </box>
       <box style={{ flexGrow: 1, flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-        <text content="StackPilot" fg={theme.text} />
-        <text content="Unified control for provider-managed sites" fg={theme.textDim} />
-        <text content={`Scaffold ready for create / status / deploy / update / delete.`} fg={theme.textFaint} />
-        <text content={`Content area: ${rows} rows`} fg={theme.textFaint} />
+        <Sites rows={rows} />
       </box>
     </box>
   )

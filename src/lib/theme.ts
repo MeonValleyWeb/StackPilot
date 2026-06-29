@@ -1,8 +1,8 @@
 // Centralized color palette + status helpers. Tweaking these restyles the whole app.
-// SpinupWP's brand green anchors the theme.
+// The palette can evolve as StackPilot's identity settles.
 
 export const theme = {
-  brand: "#00d18f", // SpinupWP green
+  brand: "#00d18f",
   brandDim: "#0a8f64",
   accent: "#5ec8ff", // sky blue for highlights/links
   text: "#e6edf3",
