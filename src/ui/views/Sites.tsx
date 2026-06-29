@@ -202,7 +202,7 @@ export function Sites({ rows }: { rows: number }) {
                 <List
                   items={sites}
                   selectedIndex={selectedIndex}
-                  viewportRows={Math.max(1, rows - 16)}
+                  viewportRows={Math.max(1, rows - 18)}
                   keyFor={(item) => item.id}
                   renderRow={(site, selectedRow) => (
                     <box style={{ flexDirection: "row", flexGrow: 1, paddingLeft: 1, paddingRight: 1 }}>
@@ -220,7 +220,7 @@ export function Sites({ rows }: { rows: number }) {
               <Section title={selected ? `Details · ${selected.name}` : "Details"} focused={panel === "details"}>
                 {selected ? (
                   <>
-                    <box style={{ flexDirection: "row", height: 3 }}>
+                    <box style={{ flexDirection: "row", height: 2 }}>
                       <MiniStat label="Repo" value={selected.repo ?? "Unknown"} />
                       <MiniStat label="Stack" value={selected.stack ?? "Unknown"} />
                       <MiniStat label="Deploy" value={since(selected.lastDeploy)} />
@@ -263,15 +263,15 @@ export function Sites({ rows }: { rows: number }) {
             </box>
           </box>
 
-          <box style={{ flexGrow: 1, flexDirection: "column" }}>
-            <Section title={`Deployment${selectedDeploy ? ` · ${selectedDeploy.siteId}` : ""}`} focused={panel === "deploy"}>
-              {selectedDeploy ? (
-                <>
-                  <box style={{ flexDirection: "row", height: 3 }}>
-                    <MiniStat label="State" value={selectedDeploy.status} />
-                    <MiniStat label="Ready" value={selectedDeploy.readyState ?? "unknown"} />
-                    <MiniStat label="Age" value={since(selectedDeploy.createdAt)} />
-                  </box>
+            <box style={{ flexGrow: 1, flexDirection: "column" }}>
+              <Section title={`Deployment${selectedDeploy ? ` · ${selectedDeploy.siteId}` : ""}`} focused={panel === "deploy"}>
+                {selectedDeploy ? (
+                  <>
+                    <box style={{ flexDirection: "row", height: 2 }}>
+                      <MiniStat label="State" value={selectedDeploy.status} />
+                      <MiniStat label="Ready" value={selectedDeploy.readyState ?? "unknown"} />
+                      <MiniStat label="Age" value={since(selectedDeploy.createdAt)} />
+                    </box>
                   <text content={`URL: ${selectedDeploy.url ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
                   <text content={`Inspector: ${selectedDeploy.inspectorUrl ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
                   <text content={selectedDeploy.errorCode ? `Error: ${selectedDeploy.errorCode}` : "No error code"} fg={selectedDeploy.errorCode ? theme.bad : theme.good} />
