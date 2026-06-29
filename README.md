@@ -16,6 +16,8 @@ New project scaffolded from the SpinUpWP TUI core. Provider-agnostic model and f
 - Current design iteration: boxed dashboard panels, site drill-down, and browser open actions
 - Site drill-down now includes deploy/domain/url panels and a usage placeholder for future API exposure
 - Selected site details now refresh from the provider API, not just the list snapshot
+- Box navigation: Tab cycles sections, `o` opens the deployment URL, `g` opens the repo, `d` opens a deployment page
+- `c` opens a create-site scaffold page
 - Action hints for future create, deploy, update, and delete flows
 
 ## Setup
