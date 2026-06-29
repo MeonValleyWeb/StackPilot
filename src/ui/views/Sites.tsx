@@ -8,7 +8,7 @@ import { loadConfig } from "../../config.ts"
 import { VercelClient } from "../../providers/vercel.ts"
 import { openUrl } from "../../lib/open.ts"
 
-type Panel = "sites" | "details" | "failed" | "recent" | "menu"
+type Panel = "sites" | "details" | "failed" | "recent" | "menu" | "site"
 
 function since(iso: string | null): string {
   if (!iso) return "Never"
@@ -76,26 +76,31 @@ export function Sites({ rows }: { rows: number }) {
     if (panel === "sites") {
       if (key.name === "down" || key.name === "j") setSelectedIndex((cur) => moveSelection(cur, 1, sites.length))
       if (key.name === "up" || key.name === "k") setSelectedIndex((cur) => moveSelection(cur, -1, sites.length))
-      if (key.name === "tab" || key.name === "enter" || key.name === ">") setPanel("details")
+      if (key.name === "tab" || key.name === ">") setPanel("details")
+      if (key.name === "enter") setPanel("site")
       return
     }
 
     if (key.name === "escape" || key.name === "<") {
+      if (panel === "site") {
+        setPanel("sites")
+        return
+      }
       setPanel("sites")
       return
     }
     if (key.name === "tab") {
-      const order: Panel[] = ["sites", "details", "failed", "recent", "menu"]
+      const order: Panel[] = ["sites", "details", "failed", "recent", "menu", "site"]
       setPanel(order[(order.indexOf(panel) + 1) % order.length])
       return
     }
     if (key.name === "left") {
-      const order: Panel[] = ["sites", "details", "failed", "recent", "menu"]
+      const order: Panel[] = ["sites", "details", "failed", "recent", "menu", "site"]
       setPanel(order[(order.indexOf(panel) + order.length - 1) % order.length])
       return
     }
     if (key.name === "right") {
-      const order: Panel[] = ["sites", "details", "failed", "recent", "menu"]
+      const order: Panel[] = ["sites", "details", "failed", "recent", "menu", "site"]
       setPanel(order[(order.indexOf(panel) + 1) % order.length])
       return
     }
@@ -134,6 +139,11 @@ export function Sites({ rows }: { rows: number }) {
       ["Can delete", selected.canDelete ? "Yes" : "No"],
     ]
   }, [selected])
+
+  const siteDeployments = useMemo(() => {
+    if (!selected) return []
+    return deploys.filter((d) => d.siteId === selected.id || d.siteId === selected.name)
+  }, [deploys, selected])
 
   return (
     <box style={{ flexGrow: 1, flexDirection: "column" }}>
@@ -200,18 +210,32 @@ export function Sites({ rows }: { rows: number }) {
             </Section>
           </box>
         </box>
+
+        {panel === "site" && selected && (
+          <box style={{ flexGrow: 1, flexDirection: "column", marginTop: 1 }}>
+            <Section title="Site API View" focused>
+              <text content={selected.name} fg={theme.text} />
+              <text content={`Repo: ${selected.repo ?? "Unknown"}`} fg={theme.textDim} />
+              <text content={`Stack: ${selected.stack ?? "Unknown"}`} fg={theme.textDim} />
+              <text content={`Domains: ${selected.domains?.join(", ") ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
+              <text content={`Deployment URL: ${selected.deploymentUrl ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
+              <text content={`Recent deploys for site: ${siteDeployments.length}`} fg={theme.textDim} />
+              <text content="This page is the place to probe richer provider-specific API fields." fg={theme.textFaint} />
+            </Section>
+          </box>
+        )}
       </box>
 
       <box style={{ height: 3, flexDirection: "column", marginTop: 1 }}>
         <Section title="Menu" focused={panel === "menu"}>
-            <StatusBar
-              hints={[
-                { key: "↑↓", label: "sites" },
-                { key: "Tab", label: "switch panel" },
-                { key: "⏎", label: "open" },
-                { key: "o", label: "open url" },
-                { key: "q", label: "quit" },
-              ]}
+          <StatusBar
+            hints={[
+              { key: "↑↓", label: "sites" },
+              { key: "Tab", label: "switch panel" },
+              { key: "⏎", label: "open" },
+              { key: "o", label: "open url" },
+              { key: "q", label: "quit" },
+            ]}
             message={panel === "menu" ? "Menu focused" : "Tab through panels for details"}
             showGlobal={false}
           />
