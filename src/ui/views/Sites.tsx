@@ -46,6 +46,15 @@ function Section({
   )
 }
 
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <box style={{ flexDirection: "column", flexGrow: 1, paddingLeft: 1, paddingRight: 1 }}>
+      <text content={label} fg={theme.textDim} />
+      <text content={value} fg={theme.text} />
+    </box>
+  )
+}
+
 export function Sites({ rows }: { rows: number }) {
   const [sites, setSites] = useState<Site[]>([])
   const [deploys, setDeploys] = useState<Deploy[]>([])
@@ -121,6 +130,7 @@ export function Sites({ rows }: { rows: number }) {
     `${failedCount} failed`,
     `${deploying} deploying`,
   ].join(" · ")
+  const usageSummary = "Usage summary unavailable from current token; probing dedicated endpoint later."
 
   const details = useMemo(() => {
     if (!selected) return null
@@ -177,12 +187,21 @@ export function Sites({ rows }: { rows: number }) {
 
           <box style={{ width: "58%", flexDirection: "column" }}>
             <Section title="Details" focused={panel === "details"}>
-              {selected ? details?.map(([label, value]) => (
-                <box key={label} style={{ flexDirection: "row", height: 1 }}>
-                  <text content={`${label}: `} fg={theme.textDim} />
-                  <text content={value} fg={theme.text} />
-                </box>
-              )) : <text content="Select a site to see details." fg={theme.textFaint} />}
+              {selected ? (
+                <>
+                  <box style={{ flexDirection: "row", height: 3 }}>
+                    <MiniStat label="Repo" value={selected.repo ?? "Unknown"} />
+                    <MiniStat label="Stack" value={selected.stack ?? "Unknown"} />
+                    <MiniStat label="Deploy" value={since(selected.lastDeploy)} />
+                  </box>
+                  {details?.map(([label, value]) => (
+                    <box key={label} style={{ flexDirection: "row", height: 1 }}>
+                      <text content={`${label}: `} fg={theme.textDim} />
+                      <text content={value} fg={theme.text} />
+                    </box>
+                  ))}
+                </>
+              ) : <text content="Select a site to see details." fg={theme.textFaint} />}
             </Section>
           </box>
         </box>
@@ -214,13 +233,28 @@ export function Sites({ rows }: { rows: number }) {
         {panel === "site" && selected && (
           <box style={{ flexGrow: 1, flexDirection: "column", marginTop: 1 }}>
             <Section title="Site API View" focused>
-              <text content={selected.name} fg={theme.text} />
-              <text content={`Repo: ${selected.repo ?? "Unknown"}`} fg={theme.textDim} />
-              <text content={`Stack: ${selected.stack ?? "Unknown"}`} fg={theme.textDim} />
-              <text content={`Domains: ${selected.domains?.join(", ") ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
-              <text content={`Deployment URL: ${selected.deploymentUrl ?? "Unknown"}`} fg={theme.textDim} wrapMode="none" />
-              <text content={`Recent deploys for site: ${siteDeployments.length}`} fg={theme.textDim} />
-              <text content={selected.deploymentUrl || selected.domains?.[0] ? "Press o to open in browser" : "No URL available to open"} fg={theme.textFaint} />
+              <box style={{ flexDirection: "row", height: 4 }}>
+                <MiniStat label="URL" value={selected.deploymentUrl ?? selected.domains?.[0] ?? "Unknown"} />
+                <MiniStat label="Deploys" value={`${siteDeployments.length}`} />
+                <MiniStat label="Domains" value={`${selected.domains?.length ?? 0}`} />
+              </box>
+              <box style={{ flexDirection: "row", height: 1 }}>
+                <text content="Domains: " fg={theme.textDim} />
+                <text content={selected.domains?.join(", ") ?? "Unknown"} fg={theme.text} wrapMode="none" />
+              </box>
+              <box style={{ flexDirection: "row", height: 1 }}>
+                <text content="Repo: " fg={theme.textDim} />
+                <text content={selected.repo ?? "Unknown"} fg={theme.text} />
+              </box>
+              <box style={{ flexDirection: "row", height: 1 }}>
+                <text content="Stack: " fg={theme.textDim} />
+                <text content={selected.stack ?? "Unknown"} fg={theme.text} />
+              </box>
+              <box style={{ flexDirection: "row", height: 1 }}>
+                <text content="Open: " fg={theme.textDim} />
+                <text content={selected.deploymentUrl || selected.domains?.[0] ? "Press o to open in browser" : "No URL available"} fg={theme.textFaint} />
+              </box>
+              <text content={usageSummary} fg={theme.textFaint} />
               <text content="This page is the place to probe richer provider-specific API fields." fg={theme.textFaint} />
             </Section>
           </box>

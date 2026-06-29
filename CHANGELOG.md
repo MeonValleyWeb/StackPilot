@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Site details now include repo, stack, domains, last deploy, deployment URL, and browser-open action.
 - Enter now opens a dedicated site page for deeper provider/API-specific probing.
 - Current design iteration adds boxed panels, site drill-down, and open-url affordances.
+- Site drill-down now surfaces deploy/domain/url panels and a usage placeholder until the API exposes a readable endpoint.
 
 ## [0.1.0] - 2026-06-29
 
