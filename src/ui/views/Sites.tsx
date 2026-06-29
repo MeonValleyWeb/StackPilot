@@ -57,6 +57,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
 export function Sites({ rows }: { rows: number }) {
   const [sites, setSites] = useState<Site[]>([])
+  const [selectedSite, setSelectedSite] = useState<Site | null>(null)
   const [deploys, setDeploys] = useState<Deploy[]>([])
   const [error, setError] = useState<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -78,13 +79,28 @@ export function Sites({ rows }: { rows: number }) {
       .catch((err) => setError((err as Error).message))
   }, [])
 
+  useEffect(() => {
+    const cfg = loadConfig()
+    const current = sites[selectedIndex]
+    if (!cfg.vercelToken || !current) return
+    const client = new VercelClient(cfg.vercelToken, cfg.vercelTeamId)
+    void client.getSite(current.name).then(setSelectedSite).catch(() => setSelectedSite(current))
+  }, [selectedIndex, sites])
+
   useKeyboard((key) => {
     if (sites.length === 0) return
     if (key.name === "q") return
 
+    if (key.name === "down" || key.name === "j") {
+      setSelectedIndex((cur) => moveSelection(cur, 1, sites.length))
+      return
+    }
+    if (key.name === "up" || key.name === "k") {
+      setSelectedIndex((cur) => moveSelection(cur, -1, sites.length))
+      return
+    }
+
     if (panel === "sites") {
-      if (key.name === "down" || key.name === "j") setSelectedIndex((cur) => moveSelection(cur, 1, sites.length))
-      if (key.name === "up" || key.name === "k") setSelectedIndex((cur) => moveSelection(cur, -1, sites.length))
       if (key.name === "tab" || key.name === ">") setPanel("details")
       if (key.name === "enter") setPanel("site")
       return
@@ -119,7 +135,7 @@ export function Sites({ rows }: { rows: number }) {
     }
   })
 
-  const selected = sites[selectedIndex]
+  const selected = selectedSite ?? sites[selectedIndex]
   const recent = deploys.slice(0, 8)
   const failed = deploys.filter((d) => ["error", "failed", "canceled", "cancelled"].includes(d.status.toLowerCase())).slice(0, 8)
   const deploying = deploys.filter((d) => ["pending", "building", "queued", "running", "deploying"].includes(d.status.toLowerCase())).length
@@ -186,7 +202,7 @@ export function Sites({ rows }: { rows: number }) {
           </box>
 
           <box style={{ width: "58%", flexDirection: "column" }}>
-            <Section title="Details" focused={panel === "details"}>
+            <Section title={selected ? `Details · ${selected.name}` : "Details"} focused={panel === "details"}>
               {selected ? (
                 <>
                   <box style={{ flexDirection: "row", height: 3 }}>

@@ -72,6 +72,33 @@ export class VercelClient {
     }))
   }
 
+  async getSite(name: string): Promise<Site> {
+    const res = await fetch(this.url(`/v9/projects/${encodeURIComponent(name)}`), {
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/json",
+      },
+    })
+    if (!res.ok) await this.fail(res)
+    const project = (await res.json()) as VercelProject
+    return {
+      id: project.name,
+      name: project.name,
+      provider: { id: "vercel", name: "Vercel" },
+      status: project.latestDeployment?.state ?? "unknown",
+      environment: "production",
+      lastDeploy: project.latestDeployment?.created ? new Date(project.latestDeployment.created).toISOString() : null,
+      stack: project.framework ?? null,
+      repo: project.gitRepository?.repo ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/") : null,
+      domains: (project.domains ?? []).map((domain) => typeof domain === "string" ? domain : domain.name).filter((domain): domain is string => Boolean(domain)),
+      deploymentUrl: project.latestDeployment?.url ?? null,
+      canCreate: true,
+      canUpdate: true,
+      canDelete: true,
+      canDeploy: true,
+    }
+  }
+
   async listDeployments(): Promise<Deploy[]> {
     const res = await fetch(this.url("/v6/deployments"), {
       headers: {
