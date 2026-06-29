@@ -38,7 +38,7 @@ export function App() {
       <box style={{ height: 2, flexDirection: "row", paddingLeft: 1, paddingRight: 1 }}>
         <text content="StackPilot" fg={theme.text} />
       </box>
-      <box style={{ flexGrow: 1, flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+      <box style={{ flexGrow: 1, flexDirection: "column" }}>
         <Sites rows={rows} />
       </box>
     </box>
