@@ -8,27 +8,24 @@ New project scaffolded from the SpinUpWP TUI core. Provider-agnostic model and f
 
 ## Current Scope
 
-- Vercel-backed site list scaffold
-- Dashboard layout with boxed, focusable panels, recent deploys, failed deploys, site list, and details pane
-- Basic site list view with provider and status labels
-- Site details now show repo, stack, domains, last deploy, and deployment URL
-- Enter opens a dedicated site page for deeper provider/API-specific detail probing
-- Current design iteration: boxed dashboard panels, site drill-down, and browser open actions
-- Site drill-down now includes deploy/domain/url panels and a usage placeholder for future API exposure
-- Selected site details now refresh from the provider API, not just the list snapshot
-- Box navigation: Tab cycles sections, `o` opens the deployment URL, `g` opens the repo, `d` opens a deployment page
-- `c` opens a create-site scaffold page
-- Top bar now shows the Vercel billing plan/status exposed by the token
-- Number keys: `1` Dashboard, `2` Vercel, `3` Netlify, `4` Cloudflare
-- Dashboard now renders as a compact dense grid with all panels visible
-- Action hints for future create, deploy, update, and delete flows
+- Three provider integrations: Vercel (projects + account-wide deployments + plan), Netlify (sites + per-site deploy history + plan), Cloudflare (Pages projects + deployments, zones, Workers scripts)
+- Cross-provider dashboard: summary card per provider (connection health, site/failed/building counts, plan, last deploy), merged all-sites list, merged recent activity, and a "needs attention" feed of failed deploys
+- Dedicated page per provider with a sites list, details pane (status, repo, branch, stack, domains, URL, last deploy), and deployment history for the selected site
+- All providers load in parallel at startup; `r` refreshes everything
+- Navigation: number keys `1`–`4` switch pages, Tab cycles panels, `↑↓`/`j k` move, Enter on a dashboard site jumps to its provider page
+- Actions: `o` opens the site URL, `g` the repo, `d` the deploy inspector/logs, `a` the provider admin page (Netlify/Cloudflare), `?` shows a help overlay
+- Header shows per-provider health dots (green loaded / amber loading / red error / dim unconfigured)
 
 ## Setup
 
 1. Copy `.env.example` to `.env`.
-2. Add `VERCEL_TOKEN`.
-3. Optionally set `VERCEL_TEAM_ID` if you want to scope requests to a team.
-4. Run `bun install` and `bun run dev`.
+2. Add the tokens for the providers you use:
+   - `VERCEL_TOKEN` (optionally `VERCEL_TEAM_ID` to scope to a team)
+   - `NETLIFY_API_KEY` (personal access token)
+   - `CLOUDFLARE_API_TOKEN` with read access to Pages, Workers Scripts, and Zone (optionally `CLOUDFLARE_ACCOUNT_ID`; otherwise the first visible account is used)
+3. Run `bun install` and `bun run dev`.
+
+Providers without a token show as "not configured" and the rest of the app works normally.
 
 ## Working Agreement
 

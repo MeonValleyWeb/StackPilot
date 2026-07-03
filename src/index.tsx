@@ -6,13 +6,16 @@ import { createCliRenderer } from "@opentui/core"
 import { createRoot } from "@opentui/react"
 import pkg from "../package.json" with { type: "json" }
 import { StoreProvider } from "./ui/store.tsx"
+import { DataProvider } from "./ui/data.tsx"
 import { App } from "./ui/App.tsx"
 console.log(`StackPilot v${pkg.version}`)
 
 function Root() {
   return (
     <StoreProvider>
-      <App />
+      <DataProvider>
+        <App />
+      </DataProvider>
     </StoreProvider>
   )
 }

@@ -1,6 +1,6 @@
 {
   "name": "stackpilot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A terminal control plane for managing sites across providers.",
   "type": "module",
   "bin": {

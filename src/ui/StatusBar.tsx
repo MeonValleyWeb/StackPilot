@@ -11,7 +11,6 @@ export interface KeyHint {
 
 const GLOBAL_HINTS: KeyHint[] = [
   { key: "r", label: "refresh" },
-  { key: "i", label: "explain" },
   { key: "?", label: "help" },
   { key: "q", label: "quit" },
 ]
@@ -34,11 +33,13 @@ export function StatusBar({
   message,
   messageColor,
   showGlobal = true,
+  compact = false,
 }: {
   hints: KeyHint[]
   message?: string
   messageColor?: string
   showGlobal?: boolean
+  compact?: boolean
 }) {
   return (
     <box
@@ -50,8 +51,8 @@ export function StatusBar({
         paddingRight: 1,
         alignItems: "center",
       }}
-    >
-      <HintGroup hints={hints} />
+      >
+      {compact ? <HintGroup hints={hints.slice(0, 4)} /> : <HintGroup hints={hints} />}
       {message && <text content={message} fg={messageColor ?? theme.brand} />}
       <box style={{ flexGrow: 1 }} />
       {showGlobal && <HintGroup hints={GLOBAL_HINTS} dim />}

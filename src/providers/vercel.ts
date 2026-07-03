@@ -1,4 +1,4 @@
-import type { Deploy, Site } from "../domain.ts"
+import { PROVIDERS, type Deploy, type Site } from "../domain.ts"
 
 interface VercelProject {
   name: string
@@ -9,7 +9,6 @@ interface VercelProject {
     org?: string | null
     repoId?: string | number | null
   } | null
-  domains?: Array<string | { name?: string | null }> | null
   latestDeployment?: {
     state?: string
     created?: number
@@ -56,6 +55,44 @@ interface VercelDeployment {
   } | null
 }
 
+export interface VercelAccount {
+  name: string | null
+  plan: string | null
+  planStatus: string | null
+}
+
+function mapProject(project: VercelProject): Site {
+  const latest = project.latestDeployments?.[0]
+  return {
+    id: project.name,
+    name: project.name,
+    provider: PROVIDERS.vercel,
+    status: latest?.state ?? project.latestDeployment?.state ?? "unknown",
+    environment: "production",
+    lastDeploy: latest?.createdAt
+      ? new Date(latest.createdAt).toISOString()
+      : project.latestDeployment?.created
+        ? new Date(project.latestDeployment.created).toISOString()
+        : null,
+    stack: project.framework ?? null,
+    repo: project.link?.repo
+      ? [project.link.org, project.link.repo].filter(Boolean).join("/")
+      : project.gitRepository?.repo
+        ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/")
+        : null,
+    branch: project.link?.productionBranch ?? null,
+    domains: (project.targets?.production?.alias ?? [])
+      .concat(project.targets?.preview?.alias ?? [])
+      .map((domain) => domain.replace(/^https?:\/\//, ""))
+      .filter((domain, index, arr) => Boolean(domain) && arr.indexOf(domain) === index),
+    deploymentUrl: latest?.url ?? project.latestDeployment?.url ?? null,
+    canCreate: true,
+    canUpdate: true,
+    canDelete: true,
+    canDeploy: true,
+  }
+}
+
 export class VercelClient {
   constructor(private token: string, private teamId: string | null) {}
 
@@ -65,92 +102,38 @@ export class VercelClient {
     return url.toString()
   }
 
-  private async fail(res: Response): Promise<never> {
-    const body = await res.text().catch(() => "")
-    const detail = body ? `: ${body}` : ""
-    throw new Error(`Vercel API error (${res.status} ${res.statusText})${detail}`)
+  private async get<T>(path: string): Promise<T> {
+    const res = await fetch(this.url(path), {
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/json",
+      },
+    })
+    if (!res.ok) {
+      const body = await res.text().catch(() => "")
+      const detail = body ? `: ${body.slice(0, 200)}` : ""
+      throw new Error(`Vercel API error (${res.status} ${res.statusText})${detail}`)
+    }
+    return (await res.json()) as T
   }
 
   async listSites(): Promise<Site[]> {
-    const res = await fetch(this.url("/v9/projects"), {
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: "application/json",
-      },
-    })
-    if (!res.ok) await this.fail(res)
-    const json = (await res.json()) as { projects?: VercelProject[] }
-    return (json.projects ?? []).map((project) => ({
-      id: project.name,
-      name: project.name,
-      provider: { id: "vercel", name: "Vercel" },
-      status: project.latestDeployments?.[0]?.state ?? project.latestDeployment?.state ?? "unknown",
-      environment: "production",
-      lastDeploy: project.latestDeployments?.[0]?.createdAt
-        ? new Date(project.latestDeployments[0].createdAt).toISOString()
-        : project.latestDeployment?.created
-          ? new Date(project.latestDeployment.created).toISOString()
-          : null,
-      stack: project.framework ?? null,
-      repo: project.link?.repo ? [project.link.org, project.link.repo].filter(Boolean).join("/") : project.gitRepository?.repo ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/") : null,
-      domains: (project.targets?.production?.alias ?? [])
-        .concat(project.targets?.preview?.alias ?? [])
-        .map((domain) => domain.replace(/^https?:\/\//, ""))
-        .filter((domain, index, arr) => Boolean(domain) && arr.indexOf(domain) === index),
-      deploymentUrl: project.latestDeployments?.[0]?.url ?? project.latestDeployment?.url ?? null,
-      canCreate: true,
-      canUpdate: true,
-      canDelete: true,
-      canDeploy: true,
-    }))
+    const json = await this.get<{ projects?: VercelProject[] }>("/v9/projects?limit=100")
+    return (json.projects ?? []).map(mapProject)
   }
 
   async getSite(name: string): Promise<Site> {
-    const res = await fetch(this.url(`/v9/projects/${encodeURIComponent(name)}`), {
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: "application/json",
-      },
-    })
-    if (!res.ok) await this.fail(res)
-    const project = (await res.json()) as VercelProject
-    return {
-      id: project.name,
-      name: project.name,
-      provider: { id: "vercel", name: "Vercel" },
-      status: project.latestDeployments?.[0]?.state ?? project.latestDeployment?.state ?? "unknown",
-      environment: "production",
-      lastDeploy: project.latestDeployments?.[0]?.createdAt
-        ? new Date(project.latestDeployments[0].createdAt).toISOString()
-        : project.latestDeployment?.created
-          ? new Date(project.latestDeployment.created).toISOString()
-          : null,
-      stack: project.framework ?? null,
-      repo: project.link?.repo ? [project.link.org, project.link.repo].filter(Boolean).join("/") : project.gitRepository?.repo ? [project.gitRepository.org, project.gitRepository.repo].filter(Boolean).join("/") : null,
-      domains: (project.targets?.production?.alias ?? [])
-        .concat(project.targets?.preview?.alias ?? [])
-        .map((domain) => domain.replace(/^https?:\/\//, ""))
-        .filter((domain, index, arr) => Boolean(domain) && arr.indexOf(domain) === index),
-      deploymentUrl: project.latestDeployments?.[0]?.url ?? project.latestDeployment?.url ?? null,
-      canCreate: true,
-      canUpdate: true,
-      canDelete: true,
-      canDeploy: true,
-    }
+    const project = await this.get<VercelProject>(`/v9/projects/${encodeURIComponent(name)}`)
+    return mapProject(project)
   }
 
   async listDeployments(): Promise<Deploy[]> {
-    const res = await fetch(this.url("/v6/deployments"), {
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: "application/json",
-      },
-    })
-    if (!res.ok) await this.fail(res)
-    const json = (await res.json()) as { deployments?: VercelDeployment[] }
-  return (json.deployments ?? []).map((deployment) => ({
+    const json = await this.get<{ deployments?: VercelDeployment[] }>("/v6/deployments?limit=50")
+    return (json.deployments ?? []).map((deployment) => ({
       id: deployment.uid,
+      provider: "vercel" as const,
       siteId: deployment.name,
+      siteName: deployment.name,
       status: deployment.state,
       createdAt: deployment.created ? new Date(deployment.created).toISOString() : new Date().toISOString(),
       url: deployment.url ?? null,
@@ -162,5 +145,14 @@ export class VercelClient {
       errorMessage: null,
       readyState: deployment.state,
     }))
+  }
+
+  async getAccount(): Promise<VercelAccount> {
+    const json = await this.get<{ user?: { username?: string | null; name?: string | null; billing?: { plan?: string | null; status?: string | null } | null } }>("/v2/user")
+    return {
+      name: json.user?.name ?? json.user?.username ?? null,
+      plan: json.user?.billing?.plan ?? null,
+      planStatus: json.user?.billing?.status ?? null,
+    }
   }
 }

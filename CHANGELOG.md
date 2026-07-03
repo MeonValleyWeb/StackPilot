@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Netlify provider client (sites, per-site deploy history, account/plan) via `NETLIFY_API_KEY`.
+- Cloudflare provider client (Pages projects + deployments, zones, Workers scripts, account auto-discovery) via `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`.
+- Shared data layer that loads all three providers in parallel; `r` refreshes everything.
+- Cross-provider dashboard: per-provider summary cards (connection, sites, failed/building, plan, last deploy), merged all-sites list, merged recent activity, and a "needs attention" feed of failed deploys.
+- Dedicated provider pages: Vercel (projects, details, deployment feed), Netlify (sites, details, lazy per-site deploys, `a` opens admin), Cloudflare (Pages projects, deployments, zones, Workers, `a` opens dash).
+- Enter on a dashboard site jumps to its provider page with that site pre-selected.
+- Help overlay on `?` listing all keybindings; tab-style header with per-provider health dots.
+
+### Changed
+- Panels now draw real rounded borders with embedded titles instead of flat text headers.
+- Status colors/dots understand Netlify and Cloudflare state vocabularies (`ready`, `success`, `failure`, `enqueued`, `paused`, …).
+- Footer status bar is rendered once by the app shell with per-page hints and a global refresh/help/quit set.
+
+### Removed
+- The single Vercel-only dashboard view (`Sites.tsx`), superseded by the dashboard and provider pages.
 - Initial StackPilot scaffold.
 - Neutral OpenTUI shell and minimal CLI entrypoint.
 - Versioned package metadata and release log.

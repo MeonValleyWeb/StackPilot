@@ -1,6 +1,8 @@
 // Centralized color palette + status helpers. Tweaking these restyles the whole app.
 // The palette can evolve as StackPilot's identity settles.
 
+import type { ProviderId } from "../domain.ts"
+
 export const theme = {
   brand: "#00d18f",
   brandDim: "#0a8f64",
@@ -21,27 +23,42 @@ export const theme = {
   purple: "#bc8cff",
 } as const
 
+// Brand colors + list glyphs for each provider, used wherever sites from
+// multiple providers appear side by side.
+export const providerColor: Record<ProviderId, string> = {
+  vercel: "#e6edf3",
+  netlify: "#00c7b7",
+  cloudflare: "#f38020",
+}
+
+export const providerGlyph: Record<ProviderId, string> = {
+  vercel: "▲",
+  netlify: "◆",
+  cloudflare: "◉",
+}
+
+// Status vocabularies across Vercel (READY/BUILDING/ERROR), Netlify
+// (ready/building/error/new/enqueued), and Cloudflare (success/failure/active,
+// zone active/paused), lowercased.
+const GOOD = ["connected", "deployed", "provisioned", "completed", "active", "success", "succeeded", "ready", "current", "published"]
+const WARN = ["connecting", "provisioning", "deploying", "queued", "running", "pending", "in_progress", "building", "enqueued", "processing", "uploading", "uploaded", "preparing", "new", "initializing", "retrying", "paused"]
+const BAD = ["disconnected", "failed", "failure", "errored", "error", "offline", "canceled", "cancelled", "crashed", "deleted"]
+
 // Map an arbitrary status/connection string to a semantic color.
 export function statusColor(status: string | null | undefined): string {
   const s = (status ?? "").toLowerCase()
-  if (["connected", "deployed", "provisioned", "completed", "active", "success"].includes(s)) {
-    return theme.good
-  }
-  if (["connecting", "provisioning", "deploying", "queued", "running", "pending", "in_progress"].includes(s)) {
-    return theme.warn
-  }
-  if (["disconnected", "failed", "errored", "error", "offline"].includes(s)) {
-    return theme.bad
-  }
+  if (GOOD.includes(s)) return theme.good
+  if (WARN.includes(s)) return theme.warn
+  if (BAD.includes(s)) return theme.bad
   return theme.textDim
 }
 
 // A small colored dot used throughout the UI to denote status at a glance.
 export function statusDot(status: string | null | undefined): string {
   const s = (status ?? "").toLowerCase()
-  if (["connected", "deployed", "provisioned", "completed", "active", "success"].includes(s)) return "●"
-  if (["connecting", "provisioning", "deploying", "queued", "running", "pending", "in_progress"].includes(s)) return "◐"
-  if (["disconnected", "failed", "errored", "error", "offline"].includes(s)) return "✕"
+  if (GOOD.includes(s)) return "●"
+  if (WARN.includes(s)) return "◐"
+  if (BAD.includes(s)) return "✕"
   return "○"
 }
 
