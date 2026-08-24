@@ -18,7 +18,12 @@ interface CfPagesDeployment {
   environment?: string | null
   created_on?: string | null
   modified_on?: string | null
-  latest_stage?: { name?: string | null; status?: string | null } | null
+  latest_stage?: {
+    name?: string | null
+    status?: string | null
+    started_on?: string | null
+    ended_on?: string | null
+  } | null
   deployment_trigger?: {
     type?: string | null
     metadata?: { branch?: string | null; commit_hash?: string | null; commit_message?: string | null } | null
@@ -44,11 +49,46 @@ export interface CloudflareZone {
   status: string
   paused: boolean
   plan: string | null
+  type: string | null
+  createdOn: string | null
+  activatedOn: string | null
+  modifiedOn: string | null
+  developmentMode: number
+  nameServers: string[]
+  originalRegistrar: string | null
+  originalDnsHost: string | null
 }
 
 export interface WorkerScript {
   id: string
   modifiedOn: string | null
+  createdOn: string | null
+  compatibilityDate: string | null
+  handlers: string[]
+  hasAssets: boolean
+  hasModules: boolean
+  lastDeployedFrom: string | null
+  usageModel: string | null
+  domains: string[]
+}
+
+export interface WorkerDeployment {
+  id: string
+  createdOn: string | null
+  source: string | null
+  strategy: string | null
+  authorEmail: string | null
+  message: string | null
+  triggeredBy: string | null
+  versions: Array<{ percentage: number; versionId: string }>
+}
+
+export interface CloudflareRegistration {
+  name: string
+  expiresAt: string | null
+  autoRenew: boolean | null
+  locked: boolean | null
+  status: string | null
 }
 
 // Collapse a Pages deployment's stage pipeline into one status word that the
@@ -84,6 +124,17 @@ export class CloudflareClient {
     return json.result
   }
 
+  private async getAllPages<T>(path: string, perPage: number): Promise<T[]> {
+    const results: T[] = []
+
+    for (let page = 1; ; page += 1) {
+      const separator = path.includes("?") ? "&" : "?"
+      const batch = await this.get<T[]>(`${path}${separator}page=${page}&per_page=${perPage}`)
+      results.push(...batch)
+      if (batch.length < perPage) return results
+    }
+  }
+
   private async account(): Promise<string> {
     if (this.accountId) return this.accountId
     const accounts = await this.get<Array<{ id: string }>>("/accounts")
@@ -93,12 +144,13 @@ export class CloudflareClient {
     return first.id
   }
 
-  private dashUrl(accountId: string, project: string, deploymentId?: string): string {
-    const base = `https://dash.cloudflare.com/${accountId}/pages/view/${project}`
-    return deploymentId ? `${base}/${deploymentId}` : base
+  private dashUrl(accountId: string, project: string): string {
+    return `https://dash.cloudflare.com/${accountId}/pages/view/${project}`
   }
 
   private mapDeployment(accountId: string, project: string, d: CfPagesDeployment): Deploy {
+    const started = d.latest_stage?.started_on ? new Date(d.latest_stage.started_on).getTime() : null
+    const ended = d.latest_stage?.ended_on ? new Date(d.latest_stage.ended_on).getTime() : null
     return {
       id: d.id,
       provider: "cloudflare",
@@ -107,20 +159,26 @@ export class CloudflareClient {
       status: deploymentStatus(d),
       createdAt: d.created_on ?? new Date().toISOString(),
       url: d.url ?? null,
-      inspectorUrl: this.dashUrl(accountId, project, d.id),
+      // Cloudflare does not return a stable dashboard inspector URL. Falling
+      // back to the API-provided deployment URL avoids brittle dashboard links.
+      inspectorUrl: null,
       branch: d.deployment_trigger?.metadata?.branch ?? null,
       target: d.environment ?? null,
       creator: null,
       errorCode: null,
       errorMessage: d.deployment_trigger?.metadata?.commit_message ?? null,
       readyState: d.latest_stage?.status ?? null,
+      commitHash: d.deployment_trigger?.metadata?.commit_hash ?? null,
+      trigger: d.deployment_trigger?.type ?? null,
+      durationMs: started !== null && ended !== null ? Math.max(0, ended - started) : null,
     }
   }
 
   // Pages projects + their latest deployments in one request, normalized.
   async fetchPages(): Promise<{ sites: Site[]; deploys: Deploy[] }> {
     const accountId = await this.account()
-    const projects = await this.get<CfPagesProject[]>(`/accounts/${accountId}/pages/projects?per_page=100`)
+    // Cloudflare Pages currently caps project listings at 10 items per page.
+    const projects = await this.getAllPages<CfPagesProject>(`/accounts/${accountId}/pages/projects`, 10)
     const sites = projects.map((project): Site => {
       const latest = project.latest_deployment
       const source = project.source?.config
@@ -158,7 +216,21 @@ export class CloudflareClient {
   }
 
   async listZones(): Promise<CloudflareZone[]> {
-    const zones = await this.get<Array<{ id: string; name: string; status?: string | null; paused?: boolean | null; plan?: { name?: string | null } | null }>>(
+    const zones = await this.get<Array<{
+      id: string
+      name: string
+      status?: string | null
+      paused?: boolean | null
+      plan?: { name?: string | null } | null
+      type?: string | null
+      created_on?: string | null
+      activated_on?: string | null
+      modified_on?: string | null
+      development_mode?: number | null
+      name_servers?: string[] | null
+      original_registrar?: string | null
+      original_dnshost?: string | null
+    }>>(
       "/zones?per_page=50",
     )
     return zones.map((zone) => ({
@@ -167,13 +239,94 @@ export class CloudflareClient {
       status: zone.paused ? "paused" : zone.status ?? "unknown",
       paused: Boolean(zone.paused),
       plan: zone.plan?.name ?? null,
+      type: zone.type ?? null,
+      createdOn: zone.created_on ?? null,
+      activatedOn: zone.activated_on ?? null,
+      modifiedOn: zone.modified_on ?? null,
+      developmentMode: zone.development_mode ?? 0,
+      nameServers: zone.name_servers ?? [],
+      originalRegistrar: zone.original_registrar ?? null,
+      originalDnsHost: zone.original_dnshost ?? null,
     }))
   }
 
   async listWorkers(): Promise<WorkerScript[]> {
     const accountId = await this.account()
-    const scripts = await this.get<Array<{ id: string; modified_on?: string | null }>>(`/accounts/${accountId}/workers/scripts`)
-    return scripts.map((script) => ({ id: script.id, modifiedOn: script.modified_on ?? null }))
+    const [scripts, domains] = await Promise.all([
+      this.get<Array<{
+        id: string
+        modified_on?: string | null
+        created_on?: string | null
+        compatibility_date?: string | null
+        handlers?: string[] | null
+        has_assets?: boolean | null
+        has_modules?: boolean | null
+        last_deployed_from?: string | null
+        usage_model?: string | null
+      }>>(`/accounts/${accountId}/workers/scripts`),
+      this.get<Array<{ hostname?: string | null; service?: string | null }>>(`/accounts/${accountId}/workers/domains`).catch(() => []),
+    ])
+    return scripts.map((script) => ({
+      id: script.id,
+      modifiedOn: script.modified_on ?? null,
+      createdOn: script.created_on ?? null,
+      compatibilityDate: script.compatibility_date ?? null,
+      handlers: script.handlers ?? [],
+      hasAssets: Boolean(script.has_assets),
+      hasModules: Boolean(script.has_modules),
+      lastDeployedFrom: script.last_deployed_from ?? null,
+      usageModel: script.usage_model ?? null,
+      domains: domains
+        .filter((domain) => domain.service === script.id && domain.hostname)
+        .map((domain) => domain.hostname!),
+    }))
+  }
+
+  async listWorkerDeployments(script: string): Promise<WorkerDeployment[]> {
+    const accountId = await this.account()
+    const result = await this.get<{
+      deployments?: Array<{
+        id: string
+        created_on?: string | null
+        source?: string | null
+        strategy?: string | null
+        author_email?: string | null
+        annotations?: { "workers/message"?: string | null; "workers/triggered_by"?: string | null } | null
+        versions?: Array<{ percentage?: number | null; version_id?: string | null }> | null
+      }>
+    }>(`/accounts/${accountId}/workers/scripts/${encodeURIComponent(script)}/deployments`)
+    return (result.deployments ?? []).map((deployment) => ({
+      id: deployment.id,
+      createdOn: deployment.created_on ?? null,
+      source: deployment.source ?? null,
+      strategy: deployment.strategy ?? null,
+      authorEmail: deployment.author_email ?? null,
+      message: deployment.annotations?.["workers/message"] ?? null,
+      triggeredBy: deployment.annotations?.["workers/triggered_by"] ?? null,
+      versions: (deployment.versions ?? [])
+        .filter((version) => version.version_id)
+        .map((version) => ({ percentage: version.percentage ?? 0, versionId: version.version_id! })),
+    }))
+  }
+
+  async listRegistrarDomains(): Promise<CloudflareRegistration[]> {
+    const accountId = await this.account()
+    const domains = await this.get<Array<{
+      name?: string | null
+      expires_at?: string | null
+      auto_renew?: boolean | null
+      locked?: boolean | null
+      status?: string | null
+    }>>(`/accounts/${accountId}/registrar/domains`)
+    return domains
+      .filter((domain) => domain.name)
+      .map((domain) => ({
+        name: domain.name!,
+        expiresAt: domain.expires_at ?? null,
+        autoRenew: domain.auto_renew ?? null,
+        locked: domain.locked ?? null,
+        status: domain.status ?? null,
+      }))
   }
 
   async getAccountName(): Promise<string | null> {

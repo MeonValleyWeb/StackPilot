@@ -7,7 +7,12 @@ import { PROVIDERS, type Deploy, type ProviderId, type Site } from "../domain.ts
 import { loadConfig } from "../config.ts"
 import { VercelClient } from "../providers/vercel.ts"
 import { NetlifyClient } from "../providers/netlify.ts"
-import { CloudflareClient, type CloudflareZone, type WorkerScript } from "../providers/cloudflare.ts"
+import {
+  CloudflareClient,
+  type CloudflareRegistration,
+  type CloudflareZone,
+  type WorkerScript,
+} from "../providers/cloudflare.ts"
 
 export interface ProviderState {
   id: ProviderId
@@ -30,6 +35,8 @@ interface DataValue {
   cloudflare: ProviderState
   zones: CloudflareZone[]
   workers: WorkerScript[]
+  registrations: CloudflareRegistration[]
+  registrarAvailable: boolean | null
   lastUpdated: string | null
   refresh: () => void
   providers: ProviderState[]
@@ -59,6 +66,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [cloudflare, setCloudflare] = useState(() => emptyState("cloudflare"))
   const [zones, setZones] = useState<CloudflareZone[]>([])
   const [workers, setWorkers] = useState<WorkerScript[]>([])
+  const [registrations, setRegistrations] = useState<CloudflareRegistration[]>([])
+  const [registrarAvailable, setRegistrarAvailable] = useState<boolean | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
 
   const refresh = useCallback(() => {
@@ -92,6 +101,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     if (!cfg.cloudflareToken) {
       setCloudflare((s) => ({ ...s, configured: false, loading: false }))
+      setZones([])
+      setWorkers([])
+      setRegistrations([])
+      setRegistrarAvailable(null)
     } else {
       setCloudflare((s) => ({ ...s, configured: true, loading: true, error: null }))
       const client = new CloudflareClient(cfg.cloudflareToken, cfg.cloudflareAccountId)
@@ -99,12 +112,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
         client.fetchPages(),
         client.listZones().catch(() => [] as CloudflareZone[]),
         client.listWorkers().catch(() => [] as WorkerScript[]),
+        client
+          .listRegistrarDomains()
+          .then((items) => ({ items, available: true }))
+          .catch(() => ({ items: [] as CloudflareRegistration[], available: false })),
         client.getAccountName().catch(() => null),
       ])
-        .then(([{ sites, deploys }, zoneList, workerList, account]) => {
+        .then(([{ sites, deploys }, zoneList, workerList, registrar, account]) => {
           setCloudflare((s) => ({ ...s, loading: false, sites, deploys, account }))
           setZones(zoneList)
           setWorkers(workerList)
+          setRegistrations(registrar.items)
+          setRegistrarAvailable(registrar.available)
           setLastUpdated(new Date().toISOString())
         })
         .catch((err) => setCloudflare((s) => ({ ...s, loading: false, error: (err as Error).message })))
@@ -121,8 +140,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const allDeploys = providers
       .flatMap((p) => p.deploys)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    return { vercel, netlify, cloudflare, zones, workers, lastUpdated, refresh, providers, allSites, allDeploys }
-  }, [vercel, netlify, cloudflare, zones, workers, lastUpdated, refresh])
+    return { vercel, netlify, cloudflare, zones, workers, registrations, registrarAvailable, lastUpdated, refresh, providers, allSites, allDeploys }
+  }, [vercel, netlify, cloudflare, zones, workers, registrations, registrarAvailable, lastUpdated, refresh])
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

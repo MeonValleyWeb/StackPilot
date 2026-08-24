@@ -46,10 +46,10 @@ const HINTS: Record<Route, KeyHint[]> = {
   cloudflare: [
     { key: "↑↓", label: "move" },
     { key: "Tab", label: "panel" },
-    { key: "o", label: "open url" },
+    { key: "o", label: "site/domain" },
     { key: "g", label: "repo" },
     { key: "a", label: "dash" },
-    { key: "d", label: "deployment" },
+    { key: "d", label: "deploy url" },
   ],
 }
 
@@ -70,7 +70,7 @@ function Help() {
     ["⏎", "dashboard: jump to the selected site's provider page"],
     ["o", "open site url in browser"],
     ["g", "open git repo"],
-    ["d", "open deploy inspector / logs page"],
+    ["d", "open deploy inspector, or Cloudflare deployment URL"],
     ["a", "open provider admin/dashboard (Netlify, Cloudflare)"],
     ["r", "refresh all providers"],
     ["?", "toggle this help"],

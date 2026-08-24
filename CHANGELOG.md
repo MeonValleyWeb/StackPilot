@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Paginate Cloudflare Pages project requests within the API's ten-project page limit.
+- Show a proper empty state after Pages or Worker deployment history finishes loading with no results.
+- Write compiled binaries to the ignored `dist/` directory instead of leaving an untracked file in the project root.
+
 ### Added
 - Netlify provider client (sites, per-site deploy history, account/plan) via `NETLIFY_API_KEY`.
 - Cloudflare provider client (Pages projects + deployments, zones, Workers scripts, account auto-discovery) via `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`.
@@ -15,11 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dedicated provider pages: Vercel (projects, details, deployment feed), Netlify (sites, details, lazy per-site deploys, `a` opens admin), Cloudflare (Pages projects, deployments, zones, Workers, `a` opens dash).
 - Enter on a dashboard site jumps to its provider page with that site pre-selected.
 - Help overlay on `?` listing all keybindings; tab-style header with per-provider health dots.
+- Cloudflare Zone operational details, optional Registrar expiry/renewal data, and Worker metadata with per-script deployment history.
 
 ### Changed
 - Panels now draw real rounded borders with embedded titles instead of flat text headers.
 - Status colors/dots understand Netlify and Cloudflare state vocabularies (`ready`, `success`, `failure`, `enqueued`, `paused`, …).
 - Footer status bar is rendered once by the app shell with per-page hints and a global refresh/help/quit set.
+- Cloudflare now uses focused Pages, Deployments, Zones, and Workers subviews with selected-resource details.
+- Cloudflare deployment actions open the API-provided deployment URL instead of an unreliable constructed dashboard deep link.
 
 ### Removed
 - The single Vercel-only dashboard view (`Sites.tsx`), superseded by the dashboard and provider pages.
