@@ -10,8 +10,9 @@ end is the default — no need to ask which files to touch; they're all listed h
   tidy commit per feature and gives each feature a durable PR artifact (the *why*,
   testing notes, decisions) — worth it now that the app makes write calls to live
   infrastructure.
-- **Docs / chore only** (CHANGELOG, README, this file, version bumps) → may be
-  committed **directly to `main`**; no branch/PR required.
+- **Docs / chore only** (CHANGELOG, README, this file, version bumps) → use a
+  small `chore/…` branch and PR once `main` protection is enabled.
+- Every PR must pass the required `verify` status check before squash-merging.
 - Never let **client domains** appear in any public artifact — commit messages,
   PR titles/bodies, release notes, code, or docs. Anonymize (e.g. "a production
   site", `web3.example.com`).
@@ -52,7 +53,7 @@ catch.
 
 Run these in order. Replace `X.Y.Z` with the new version.
 
-1. **Land the work.** Feature branch merged to `main` (or docs committed directly).
+1. **Land the work.** Feature branch merged to `main`.
    `bun run typecheck` is green, and `README.md` reflects the new features (see
    "Keep the README current").
 2. **Bump the version** in `package.json`.
@@ -65,16 +66,15 @@ Run these in order. Replace `X.Y.Z` with the new version.
    ```
    (Do the version bump + changelog roll *before* tagging so the tagged commit
    carries them.)
-4. **Commit** the bump + changelog (`chore: release vX.Y.Z`) and get it onto
-   `main` (direct, or as part of the feature PR).
+4. **Commit** the bump + changelog (`chore: release vX.Y.Z`) on a `chore/…`
+   branch, open a PR, wait for `verify`, and squash-merge it to `main`.
 5. **Tag** an annotated tag on `main` and push it:
    ```sh
    git checkout main && git pull --ff-only
    git tag -a vX.Y.Z -m "vX.Y.Z — <short theme>"
    git push origin vX.Y.Z
    ```
-6. **Publish the GitHub release** matching the house style of prior releases
-   (`gh release view v0.2.0` for reference):
+6. **Publish the GitHub release** using this house style:
    ```sh
    gh release create vX.Y.Z --verify-tag \
      --title "vX.Y.Z — <short theme>" \
