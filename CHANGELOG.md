@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2026-08-24
 
 ### Fixed
+- Run CI with the Node 24-compatible checkout action used by current GitHub-hosted runners.
 - Paginate Cloudflare Pages project requests within the API's ten-project page limit.
 - Show a proper empty state after Pages or Worker deployment history finishes loading with no results.
 - Write compiled binaries to the ignored `dist/` directory instead of leaving an untracked file in the project root.
