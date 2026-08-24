@@ -51,6 +51,9 @@ export interface Deploy {
   errorCode?: string | null
   errorMessage?: string | null
   readyState?: string | null
+  commitHash?: string | null
+  trigger?: string | null
+  durationMs?: number | null
 }
 
 const FAILED_STATES = ["error", "failed", "failure", "errored", "canceled", "cancelled", "crashed"]
