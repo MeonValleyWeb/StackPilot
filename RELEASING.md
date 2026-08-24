@@ -86,7 +86,7 @@ Run these in order. Replace `X.Y.Z` with the new version.
    ## Notes
    - …
 
-   **Update:** \`git pull\` in your checkout (the global \`spinup\` symlink picks it up immediately).
+   **Update:** \`git pull\` in your checkout (the global \`stackpilot\` symlink picks it up immediately).
 
     **Full changelog:** https://github.com/MeonValleyWeb/StackPilot/compare/vPREV...vX.Y.Z"
    ```
