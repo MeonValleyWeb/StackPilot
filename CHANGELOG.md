@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refresh the Bun toolchain, terminal UI, React, and TypeScript dependencies, and keep OpenTUI updates within the tested `0.5` release line.
+
 ## [0.3.0] - 2026-08-24
 
 ### Fixed
