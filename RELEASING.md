@@ -8,8 +8,8 @@ end is the default — no need to ask which files to touch; they're all listed h
 - **Code changes** → feature branch off `main` (`feat/…`, `fix/…`), then a **PR**,
   then **squash-merge** to `main` (delete the branch). This keeps `main` at one
   tidy commit per feature and gives each feature a durable PR artifact (the *why*,
-  testing notes, decisions) — worth it now that the app makes write calls to live
-  infrastructure.
+  testing notes, decisions) — worth it because the app reads live infrastructure
+  data and any future write actions will need the same audit trail.
 - **Docs / chore only** (CHANGELOG, README, this file, version bumps) → use a
   small `chore/…` branch and PR once `main` protection is enabled.
 - Every PR must pass the required `verify` status check before squash-merging.

@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add automated coverage across the Vercel, Netlify, and Cloudflare provider clients for request scoping, normalization, account data, encoded resource IDs, optional permissions, and API failures.
+
 ### Changed
 - Refresh the Bun toolchain, terminal UI, React, and TypeScript dependencies, and keep OpenTUI updates within the tested `0.5` release line.
+- Document the full keyboard controls, provider views, and current read-only operating boundary.
 
 ## [0.3.0] - 2026-08-24
 
